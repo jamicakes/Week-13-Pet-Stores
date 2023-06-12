@@ -22,11 +22,15 @@ public class PetStore {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   
   private Long petStoreId;
+  private String employeeId;
+  private String customerId;
   private String petStoreName;
+  private String petStoreAddress;
   private String petStoreCity;
   private String petStoreState;
   private String petStoreZip;
   private String petStorePhone;
+  
 
 
 
