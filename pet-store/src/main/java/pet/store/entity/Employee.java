@@ -18,10 +18,9 @@ import lombok.ToString;
 public class Employee {
 
   @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-
+  @GeneratedValue
   private Long employeeId;
-  private Long petStoreId;
+  
   private String employeeFirstName;
   private String employeeLastName;
   private String employeePhone;
@@ -31,7 +30,6 @@ public class Employee {
   @ToString.Exclude
   @ManyToOne(cascade = CascadeType.ALL)
   @JoinColumn(name = "pet_store_id")
-  private Set<PetStore> petStore = new HashSet<>();
+  private PetStore petStore;
 
-
-} // Employee Class
+}
