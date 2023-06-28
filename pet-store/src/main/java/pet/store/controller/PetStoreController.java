@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import pet.store.controller.model.PetStoreCustomer;
 import pet.store.controller.model.PetStoreData;
 import pet.store.controller.model.PetStoreEmployee;
 import pet.store.dao.PetStoreDao;
@@ -59,7 +60,16 @@ public PetStoreController(PetStoreService petStoreService) {
   }
   
   
-  
+  @PostMapping("/pet_store/{petStoreId}/customer")
+  @ResponseStatus(code = HttpStatus.CREATED)
+  public PetStoreCustomer addPetStoreCustomer (
+      @PathVariable Long petStoreId, 
+      @RequestBody PetStoreCustomer petStoreCustomer) {
+    log.info("Request received to add customer. Pet Store ID: {}, Customer: {}",petStoreId, petStoreCustomer);
+
+    return petStoreService.saveCustomer(petStoreId, petStoreCustomer);
+   
+  }
   
   
 } // main class 

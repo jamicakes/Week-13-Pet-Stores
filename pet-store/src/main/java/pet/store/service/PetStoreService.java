@@ -2,16 +2,19 @@ package pet.store.service;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Set;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import pet.store.controller.model.PetStoreData;
 import pet.store.controller.model.PetStoreEmployee;
+import pet.store.controller.model.PetStoreCustomer;
 import pet.store.dao.CustomerDao;
 import pet.store.dao.EmployeeDao;
 import pet.store.dao.PetStoreDao;
 import pet.store.entity.PetStore;
+import pet.store.entity.Customer;
 import pet.store.entity.Employee; 
 
 
@@ -108,13 +111,14 @@ public class PetStoreService {
   
 
   private Employee findOrCreateEmployee(Long petStoreId, Long employeeId) {
-    Employee employee;
+
 
     if (Objects.isNull(employeeId)) {
       return new Employee();
     } 
       return findEmployeeById(petStoreId, employeeId);
     }
+  
   
     private Employee findEmployeeById(Long petStoreId, Long employeeId) {
       Employee employee = employeeDao.findById(employeeId).orElseThrow(
@@ -128,7 +132,52 @@ public class PetStoreService {
 
     }
 
+    @Transactional(readOnly = false)
+    public PetStoreCustomer saveCustomer(Long customerId, PetStoreCustomer petStoreCustomer) {
+    PetStore petStore = findPetStoreById(petStoreCustomer);
+    //(this needs to be changed since it’s a list for many to many)
+    Long customerId = petStoreCustomer.getCustomerId();
+    Customer customer = findOrCreateCustomer(petStoreId, customerId);
 
+    copyCustomerFields(customer, petStoreCustomer);
 
+    customer.setPetStores((Set<PetStore>) petStore);
+    petStore.getCustomers().add(customer); 
+    Customer dbCustomer = customerDao.save(customer);
+    return new PetStoreCustomer(dbCustomer);
+    }
+
+    private void copyCustomerFields(Customer customer, 
+        PetStoreCustomer petStoreCustomer) {
+
+    customer.setCustomerId(petStoreCustomer.getCustomerId());
+    customer.setCustomerEmail(petStoreCustomer.getCustomerEmail());
+    customer.setCustomerFirstName(petStoreCustomer.getCustomerFirstName());
+    customer.setCustomerLastName(petStoreCustomer.getCustomerLastName());
+
+   // for (PetStore petStore : petStoreCustomer.getPetStore)
+    // for(Customer customer : petStore.getCustomers()) {
+        // customers.add(new PetStoreCustomer(customer)); nn to fill in how to get petStoreId hash set  // assigned to the customer ID  
+    }
+
+    private Customer findOrCreateCustomer(Long petStoreId, long customerId) {
+
+    if (Objects.isNull(customerId)) {
+        return new Customer();
+    } 
+    return findCustomerById(petStoreId, customerId);
+    }
+
+    private Customer findCustomerById(long petStoreId, Long customerId) {
+    Customer customer = customerDao.findById(customerId).orElseThrow(
+        () -> new NoSuchElementException("Customer with ID=" + customerId + " does not exist."));
+   
+            if(customer.getPetStores().getPetStoreId() != petStoreId) {
+        throw new IllegalArgumentException("Employee with ID=" + customerId + 
+        " is not a customer of Pet Store ID= " + petStoreId + ".");
+    }
+        return customer;
+
+    }
     
   } // main pet store service class 

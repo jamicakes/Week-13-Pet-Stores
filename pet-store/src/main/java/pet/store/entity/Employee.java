@@ -7,8 +7,6 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import java.util.HashSet;
-import java.util.Set;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -18,7 +16,7 @@ import lombok.ToString;
 public class Employee {
 
   @Id
-  @GeneratedValue
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long employeeId;
   
   private String employeeFirstName;
@@ -32,9 +30,7 @@ public class Employee {
   @JoinColumn(name = "pet_store_id")
   private PetStore petStore;
 
-  public void setEmployeePetStoreId(Long petStoreId) {
-    // TODO Auto-generated method stub
-    
-  }
+
+  
 
 }
