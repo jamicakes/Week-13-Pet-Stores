@@ -11,7 +11,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import pet.store.controller.model.PetStoreData;
+import pet.store.controller.model.PetStoreEmployee;
 import pet.store.dao.PetStoreDao;
+import pet.store.entity.PetStore;
 import pet.store.service.PetStoreService;
 
 @RestController
@@ -21,7 +23,7 @@ public class PetStoreController {
 
   private final PetStoreService petStoreService;
   
-
+@Autowired
 public PetStoreController(PetStoreService petStoreService) {
  this.petStoreService = petStoreService; 
 }
@@ -45,8 +47,16 @@ public PetStoreController(PetStoreService petStoreService) {
 
   
   
-  
-  
+  @PostMapping("/pet_store/{petStoreId}/employee")
+  @ResponseStatus(code = HttpStatus.CREATED)
+  public PetStoreEmployee addPetStoreEmployee (
+      @PathVariable Long petStoreId, 
+      @RequestBody PetStoreEmployee petStoreEmployee) {
+    log.info("Request received to add employee. Pet Store ID: {}, Employee: {}",petStoreId, petStoreEmployee);
+
+    return petStoreService.saveEmployee(petStoreId, petStoreEmployee);
+   
+  }
   
   
   
