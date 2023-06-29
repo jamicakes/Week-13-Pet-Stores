@@ -1,6 +1,7 @@
 package pet.store.entity;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -35,10 +36,13 @@ public class PetStore {
   @EqualsAndHashCode.Exclude
   @ToString.Exclude
   @ManyToMany(cascade = CascadeType.PERSIST)
-  @JoinTable(name = "pet_store_customer", joinColumns = @JoinColumn(name = "pet_store_id"),
+  @JoinTable(name = "pet_store_customer",
+      joinColumns = @JoinColumn(name = "pet_store_id"),
       inverseJoinColumns = @JoinColumn(name = "customer_id"))
   private Set<Customer> customers = new HashSet<>();
-
+  
+  @Column(name = "customer_id", insertable = false, updatable = false)
+  private Long customerId;
 
 
   @EqualsAndHashCode.Exclude
@@ -46,6 +50,8 @@ public class PetStore {
   @OneToMany(mappedBy = "petStore", cascade = CascadeType.ALL, orphanRemoval = true)
   private Set<Employee> employees = new HashSet<>();
 
+  @Column(name = "employee_id", insertable = false, updatable = false)
+  private Long employeeId;
 
 } // Pet Store Class
 

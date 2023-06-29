@@ -1,8 +1,11 @@
 package pet.store.service;
 
+import java.util.LinkedList;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +26,7 @@ public class PetStoreService {
 
 
   @Autowired
+  //might need to add final 
   private PetStoreDao petStoreDao;
   
   @Autowired
@@ -66,7 +70,7 @@ public class PetStoreService {
 
   public PetStore findPetStoreById(Long petStoreId) {
     return petStoreDao.findById(petStoreId).orElseThrow(
-       () -> new NoSuchElementException("Pet store with ID=" + petStoreId + " was not found."));
+        () -> new NoSuchElementException("Pet store with ID=" + petStoreId + " was not found."));
   }
   
 //  @Transactional(readOnly = false)
@@ -133,51 +137,106 @@ public class PetStoreService {
     }
 
     @Transactional(readOnly = false)
-    public PetStoreCustomer saveCustomer(Long customerId, PetStoreCustomer petStoreCustomer) {
-    PetStore petStore = findPetStoreById(petStoreCustomer);
-    //(this needs to be changed since it’s a list for many to many)
-    Long customerId = petStoreCustomer.getCustomerId();
-    Customer customer = findOrCreateCustomer(petStoreId, customerId);
+    public PetStoreCustomer saveCustomer(Long petStoreId, PetStoreCustomer petStoreCustomer) {
+      PetStore petStore = findPetStoreById(petStoreId);
 
-    copyCustomerFields(customer, petStoreCustomer);
+      Customer customer = findOrCreateCustomer(petStoreId, petStoreCustomer.getCustomerId());
+      copyCustomerFields(customer, petStoreCustomer);
 
-    customer.setPetStores((Set<PetStore>) petStore);
-    petStore.getCustomers().add(customer); 
-    Customer dbCustomer = customerDao.save(customer);
-    return new PetStoreCustomer(dbCustomer);
+      customer.getPetStores().add(petStore);
+      petStore.getCustomers().add(customer);
+
+      Customer dbCustomer = customerDao.save(customer);
+      return new PetStoreCustomer(dbCustomer);
     }
 
-    private void copyCustomerFields(Customer customer, 
-        PetStoreCustomer petStoreCustomer) {
-
-    customer.setCustomerId(petStoreCustomer.getCustomerId());
-    customer.setCustomerEmail(petStoreCustomer.getCustomerEmail());
-    customer.setCustomerFirstName(petStoreCustomer.getCustomerFirstName());
-    customer.setCustomerLastName(petStoreCustomer.getCustomerLastName());
-
-   // for (PetStore petStore : petStoreCustomer.getPetStore)
-    // for(Customer customer : petStore.getCustomers()) {
-        // customers.add(new PetStoreCustomer(customer)); nn to fill in how to get petStoreId hash set  // assigned to the customer ID  
+    private void copyCustomerFields(Customer customer, PetStoreCustomer petStoreCustomer) {
+      customer.setCustomerId(petStoreCustomer.getCustomerId());
+      customer.setCustomerEmail(petStoreCustomer.getCustomerEmail());
+      customer.setCustomerFirstName(petStoreCustomer.getCustomerFirstName());
+      customer.setCustomerLastName(petStoreCustomer.getCustomerLastName());
     }
 
-    private Customer findOrCreateCustomer(Long petStoreId, long customerId) {
-
-    if (Objects.isNull(customerId)) {
+    private Customer findOrCreateCustomer(Long petStoreId, Long customerId) {
+      if (Objects.isNull(customerId)) {
         return new Customer();
-    } 
-    return findCustomerById(petStoreId, customerId);
+      }
+      return findCustomerById(customerId);
     }
 
-    private Customer findCustomerById(long petStoreId, Long customerId) {
-    Customer customer = customerDao.findById(customerId).orElseThrow(
-        () -> new NoSuchElementException("Customer with ID=" + customerId + " does not exist."));
-   
-            if(customer.getPetStores().getPetStoreId() != petStoreId) {
-        throw new IllegalArgumentException("Employee with ID=" + customerId + 
-        " is not a customer of Pet Store ID= " + petStoreId + ".");
+    private Customer findCustomerById(Long customerId) {
+      return customerDao.findById(customerId).orElseThrow(
+          () -> new NoSuchElementException("Customer with ID=" + customerId + " does not exist."));
     }
-        return customer;
 
+
+    @Transactional(readOnly = true)
+    public List<PetStoreData> retrieveAllPetStores() {
+      List<PetStore> petStores = petStoreDao.findAll();
+
+      List<PetStoreData> result = new LinkedList<>();
+      for (PetStore petStore : petStores) {
+        PetStoreData psd = new PetStoreData(petStore);
+        psd.getCustomers().clear();
+        psd.getEmployees().clear();
+        result.add(psd);
+      }
+
+      return result;
     }
+
+    @Transactional(readOnly = true)
+    public PetStoreData retrievePetstoreById(Long petStoreId) {
+      PetStore petStore = petStoreDao.findByPetStoreId(petStoreId);
+
+      if (petStore == null) {
+        throw new IllegalStateException("Pet store with ID=" + petStoreId + " does not exist.");
+      }
+      PetStoreData petStoreData = new PetStoreData(petStore);
+      Set<PetStoreEmployee> employees = petStore.getEmployees().stream()
+          .map(PetStoreEmployee::new)
+          .collect(Collectors.toSet());
+      Set<PetStoreCustomer> customers = petStore.getCustomers().stream()
+          .map(PetStoreCustomer::new)
+          .collect(Collectors.toSet());
+
+      petStoreData.setEmployees(employees);
+      petStoreData.setCustomers(customers);
+
+      return petStoreData;
+    }
+
+    @Transactional(readOnly = false)
+    public void deletePetStoreById(Long petStoreId) {
+      PetStore petStore = findPetStoreById(petStoreId);
+      
+      for (Customer customer : petStore.getCustomers()) {
+        customer.getPetStores().remove(petStore);
+        customerDao.save(customer);
+    }
+      petStoreDao.delete(petStore);
+    }
+  } // main pet store service class
+
+  //  canceling all this out since it didn't work trying again 
+//private List<PetStore> petStores;
+//Long petStoreId;
+
+
+//    public List<PetStoreData> retrieveAllPetStores() {
+//      List<PetStoreData> result = new LinkedList<>();
+
+//        for (PetStore petStore : petStores) {
+//        PetStoreData psd = new PetStoreData(petStore);
+//        psd.getCustomers().clear();
+//        psd.getEmployees().clear();
+//
+//        result.add(psd);
+ //     }
+
+//      return result;
+//    }
+
+
     
-  } // main pet store service class 
+
