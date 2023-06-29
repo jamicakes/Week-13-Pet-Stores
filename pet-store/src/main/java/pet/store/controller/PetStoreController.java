@@ -1,8 +1,12 @@
 package pet.store.controller;
 
+import java.util.List;
+import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -62,14 +66,32 @@ public PetStoreController(PetStoreService petStoreService) {
   
   @PostMapping("/pet_store/{petStoreId}/customer")
   @ResponseStatus(code = HttpStatus.CREATED)
-  public PetStoreCustomer addPetStoreCustomer (
-      @PathVariable Long petStoreId, 
-      @RequestBody PetStoreCustomer petStoreCustomer) {
-    log.info("Request received to add customer. Pet Store ID: {}, Customer: {}",petStoreId, petStoreCustomer);
-
-    return petStoreService.saveCustomer(petStoreId, petStoreCustomer);
-   
+  public PetStoreCustomer addPetStoreCustomer(
+      @PathVariable Long petStoreId,
+      @RequestBody PetStoreCustomer petStoreCustomer
+  ) {
+      log.info("Request received to add customer. Pet Store ID: {}, Customer: {}", petStoreId, petStoreCustomer);
+      return petStoreService.saveCustomer(petStoreId, petStoreCustomer);
   }
   
+  @GetMapping
+  public List<PetStoreData> retrieveAllPetStores() {
+    return petStoreService.retrieveAllPetStores(); 
+  }
   
+  @GetMapping("/pet_store/{petStoreId}/")
+  public PetStoreData retrievePetStoreById(@PathVariable Long petStoreId) {
+    log.info("Retreiving pet store with ID={}", petStoreId);
+    return petStoreService.retrievePetstoreById(petStoreId);
+    
+  }
+  
+  @DeleteMapping("/pet_store/{petStoreId}/")
+  public Map<String, String> deletePetStoreById(@PathVariable long petStoreId) {
+    log.info("Deleting pet store with ID={}", petStoreId);
+
+    petStoreService.deletePetStoreById(petStoreId);
+
+    return Map.of("message", "Deletion of pet store with ID=" + petStoreId + " was successful.");
+  }
 } // main class 
